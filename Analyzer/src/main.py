@@ -3,6 +3,7 @@ import pickle
 from natsort import natsorted
 import glob
 from data import AllData
+from analyzer import Analyzer
 
 PICKLE_FILE = '../pickle.txt'
 DAT_PATH = '../dat/*.dat'
@@ -29,6 +30,7 @@ def createDataDict(allFileList):
 def main():
     allFileList = natsorted(glob.glob(DAT_PATH))
     dataDict = createDataDict(allFileList)
+    analyzer = Analyzer(dataDict, allFileList)
 
 
 if __name__ == "__main__":
