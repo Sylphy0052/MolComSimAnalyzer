@@ -13,11 +13,21 @@ class AllData:
         self.adjustData = AdjustData(outputFileName)
         self.collisionData = CollisionData(outputFileName)
         self.retransmitData = RetransmitData(outputFileName)
-        
+
     def getDistance(self):
         txPos = self.datData.config["transmitter"].centerPosition
         rxPos = self.datData.config["receiver"].centerPosition
         return int(txPos.calcDistance(rxPos))
+
+    def getMean(self):
+        return self.resultData.mean_
+
+    def getTxDuplication(self):
+        moleculeParams = self.datData.config["moleculeParams"]
+        for mp in moleculeParams:
+            if mp.typeOfMolecule is MoleculeType.INFO:
+                return mp.duplication
+
 
 class DatData:
     def __init__(self, fileName):
