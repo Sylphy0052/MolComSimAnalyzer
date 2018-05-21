@@ -2,6 +2,7 @@ import numpy as np
 from enum import Enum
 import re
 import os
+import math
 
 class AllData:
     def __init__(self, fileName):
@@ -12,6 +13,11 @@ class AllData:
         self.adjustData = AdjustData(outputFileName)
         self.collisionData = CollisionData(outputFileName)
         self.retransmitData = RetransmitData(outputFileName)
+        
+    def getDistance(self):
+        txPos = self.datData.config["transmitter"].centerPosition
+        rxPos = self.datData.config["receiver"].centerPosition
+        return int(txPos.calcDistance(rxPos))
 
 class DatData:
     def __init__(self, fileName):
@@ -157,7 +163,7 @@ class RetransmitData:
                     self.retransmitRxStep.append([])
 
 
-        print(self.retransmitStep)
+        # print(self.retransmitStep)
 
 
 class Position:
@@ -169,24 +175,30 @@ class Position:
     def toString(self):
         return "({}, {}, {})".format(self.x, self.y, self.z)
 
+    def calcDistance(self, toPos):
+        delX = self.x - toPos.x
+        delY = self.y - toPos.y
+        delZ = self.z - toPos.z
+        return math.sqrt(delX ** 2 + delY ** 2 + delZ ** 2)
+
 class MicrotubuleParams:
     def __init__(self, val):
         args = [i for i in re.split(r"[,( )]", val) if i != '']
-        self.start_position = Position(args[0:3])
-        self.end_position = Position(args[3:6])
+        self.startPosition = Position(args[0:3])
+        self.endPosition = Position(args[3:6])
 
     def toString(self):
-        return "{} {}".format(self.start_position.toString(), self.end_position.toString())
+        return "{} {}".format(self.startPosition.toString(), self.endPosition.toString())
 
 class MoleculeParams:
     def __init__(self, val):
         args = [i for i in re.split(r"[ ]", val) if i != '']
         self.duplication = int(args[0])
-        self.type_of_molecule = MoleculeType[args[1]]
+        self.typeOfMolecule = MoleculeType[args[1]]
         self.size = 1
-        if self.type_of_molecule != MoleculeType["NOISE"]:
-            self.type_of_movement = MovementType[args[2]]
-            self.adaptive_change_number = int(args[3])
+        if self.typeOfMolecule != MoleculeType["NOISE"]:
+            self.typeOfMovement = MovementType[args[2]]
+            self.adaptiveChangeNumber = int(args[3])
             if len(args) == 5:
                 self.size = float(args[4])
             else:
@@ -198,37 +210,37 @@ class MoleculeParams:
                 self.size = float(1)
 
     def toString(self):
-        if self.type_of_molecule != MoleculeType["NOISE"]:
-            return "{} {} {} {} {}".format(self.duplication, self.type_of_molecule.name, self.type_of_movement.name, self.adaptive_change_number, self.size)
+        if self.typeOfMolecule != MoleculeType["NOISE"]:
+            return "{} {} {} {} {}".format(self.duplication, self.typeOfMolecule.name, self.typeOfMovement.name, self.adaptiveChangeNumber, self.size)
         else:
-            return "{} {} {}".format(self.duplication, self.type_of_molecule.name, self.size)
+            return "{} {} {}".format(self.duplication, self.typeOfMolecule.name, self.size)
 
 class IntermediateNode:
     def __init__(self, val):
         args = [i for i in re.split(r"[,( )]", val) if i != '']
-        self.center_position = Position(args[0:3])
+        self.centerPosition = Position(args[0:3])
         self.size = int(args[3])
-        self.info_release_position = Position(args[4:7])
-        self.ack_release_position = Position(args[7:10])
+        self.infoReleasePosition = Position(args[4:7])
+        self.ackReleasePosition = Position(args[7:10])
 
     def toString(self):
-        return "{} {} {} {}".format(self.center_position.toString(), self.size, self.info_release_position.toString(), self.ack_release_position.toString())
+        return "{} {} {} {}".format(self.centerPosition.toString(), self.size, self.infoReleasePosition.toString(), self.ackReleasePosition.toString())
 
 class NanoMachine:
     def __init__(self, val):
         args = [i for i in re.split(r"[,( )]", val) if i != '']
-        self.center_position = Position(args[0:3])
+        self.centerPosition = Position(args[0:3])
         self.size = int(args[3])
-        self.release_position = Position(args[4:7])
+        self.releasePosition = Position(args[4:7])
 
     def toString(self):
-        return "{} {} {}".format(self.center_position.toString(), self.size, self.release_position.toString())
+        return "{} {} {}".format(self.centerPosition.toString(), self.size, self.releasePosition.toString())
 
 class FEC:
     def __init__(self, val):
         args = [i for i in re.split(r"[,( )]", val) if i != '']
         self.type = args[0]
-        self.require_packet = int(args[1])
+        self.requirePacket = int(args[1])
         self.rate = float(args[2])
 
 class MoleculeType(Enum):
