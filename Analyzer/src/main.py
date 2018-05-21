@@ -31,6 +31,7 @@ def main():
     allFileList = natsorted(glob.glob(DAT_PATH))
     dataDict = createDataDict(allFileList)
     analyzer = Analyzer(dataDict, allFileList)
+    analyzer.drawGraph()
 
 
 if __name__ == "__main__":
