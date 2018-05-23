@@ -13,9 +13,16 @@ class XValue(Enum):
 
 class YValue(Enum):
     MEAN = 0
+    MEDIAN = 1
+    JITTER = 2
+    COLLISION_NUM = 3
+    RETRANSMISSION_NUM = 4
+    COLLISION_TRANSITION = 5
+    RETRANSMISSION_TRANSITION = 6
 
-class Mode(Enum):
-    pass
+
+# class Mode(Enum):
+#     pass
 
 
 
@@ -32,8 +39,16 @@ class Analyzer:
             return data.getTxDuplication()
         elif value is YValue.MEAN:
             return data.getMean()
+        elif value is YValue.MEDIAN:
+            return data.getMedian()
+        elif value is YValue.JITTER:
+            return data.getJitter()
+        elif value is YValue.COLLISION_NUM:
+            return data.getCollisionNum()
+        elif value is YValue.RETRANSMISSION_NUM:
+            return data.getRetransmissionNum()
         else:
-            print("Not Define")
+            print("Not Define {} in getValue".format(value.name))
             sys.exit(1)
 
     def getLabel(self, data, value):
@@ -77,7 +92,6 @@ class Analyzer:
         labels = []
 
         for fileName in fileList:
-            print(fileName)
             data = self.dataDict[fileName]
             x = self.getValue(data, xValue)
             label = self.getLabel(data, labelValue)
@@ -99,7 +113,7 @@ class Analyzer:
         return [X, Y, labels]
 
     def defineDirectoryPath(self, xValue, yValue, classifyValue):
-        dirPath = "../compare{}_by_{}".format(yValue.name, xValue.name)
+        dirPath = "../compare_{}_by_{}".format(yValue.name, xValue.name)
         if classifyValue is not XValue.ALL:
             dirPath += "_each_{}".format(classifyValue.name)
         dirPath = dirPath.lower()
@@ -125,6 +139,8 @@ class Analyzer:
     def defineXlabel(self, xValue):
         if xValue is XValue.DISTANCE:
             return "Tx-Rx distance(um)"
+        if xValue is XValue.DUPLICATION:
+            return "Duplication level (n)"
         else:
             print("Not define {} in defineXlabel".format(xValue.name))
             sys.exit(1)
@@ -132,6 +148,14 @@ class Analyzer:
     def defineYlabel(self, yValue):
         if yValue is YValue.MEAN:
             return "Mean RTT (s)"
+        elif yValue is YValue.MEDIAN:
+            return "Median RTT (s)"
+        elif yValue is YValue.JITTER:
+            return "Jitter of RTT"
+        elif yValue is YValue.RETRANSMISSION_NUM:
+            return "Retransmission Num"
+        elif yValue is YValue.COLLISION_NUM:
+            return "Collision Num"
         else:
             print("Not define {} in defineYlabel".format(yValue.name))
             sys.exit(1)
@@ -144,6 +168,9 @@ class Analyzer:
         if xValue is XValue.DISTANCE:
             plt.xticks(X)
             plt.legend(loc='upper left')
+        elif xValue is XValue.DUPLICATION:
+            plt.xticks(X)
+            plt.legend(loc='upper right')
         else:
             print("Not define {} in drawLineGraph".format(xValue.name))
             sys.exit(1)
@@ -176,7 +203,59 @@ class Analyzer:
             self.drawLineGraph(X, Y, labels, xValue, yValue, isMath, figName)
         print("Finish making figure in {}".format(dirName))
 
+    def drawRetransmissionGraph(self):
+        dirName = "../retransmission_each_simulation"
+        if not os.path.isdir(dirName):
+            os.makedirs(dirName)
+        print("Make figure in {}".format(dirName))
 
+        for fileName in self.allFileList:
+            data = self.dataDict[fileName]
+            figName = dirName + "/" + data.datData.config["outputFile"].strip().split(".")[0] + ".png"
+            print("Make figure {}".format(figName))
+
+            X, Y = data.getRetransmissionPlotData()
+
+            plt.plot(X, Y, color=COLOR_LIST[0], markersize="5", linestyle=STYLE_LIST[0])
+
+            plt.xlabel("Steps (s)")
+            plt.ylabel("Retransmit Num")
+            plt.grid(True)
+
+            plt.savefig(figName)
+            plt.close('all')
+
+        print("Finish making figure in {}".format(dirName))
+
+    def drawCollisionGraph(self):
+        dirName = "../collision_each_simulation"
+        if not os.path.isdir(dirName):
+            os.makedirs(dirName)
+        print("Make figure in {}".format(dirName))
+
+        for fileName in self.allFileList:
+            data = self.dataDict[fileName]
+            figName = dirName + "/" + data.datData.config["outputFile"].strip().split(".")[0] + ".png"
+            print("Make figure {}".format(figName))
+
+            X, Y = data.getCollisionPlotData()
+
+            plt.plot(X, Y, color=COLOR_LIST[0], markersize="5", linestyle=STYLE_LIST[0])
+
+            plt.xlabel("Steps (s)")
+            plt.ylabel("Collision Num")
+            plt.grid(True)
+
+            plt.savefig(figName)
+            plt.close('all')
+
+        print("Finish making figure in {}".format(dirName))
 
     def drawGraph(self):
-        self.drawSpecificGraph(XValue.DISTANCE, YValue.MEAN, XValue.DUPLICATION, XValue.ALL)
+        # self.drawSpecificGraph(XValue.DISTANCE, YValue.MEAN, XValue.DUPLICATION, XValue.ALL)
+        # self.drawSpecificGraph(XValue.DUPLICATION, YValue.MEDIAN, XValue.DISTANCE, XValue.ALL)
+        # self.drawSpecificGraph(XValue.DISTANCE, YValue.JITTER, XValue.DUPLICATION, XValue.ALL)
+        # self.drawRetransmissionGraph()
+        # self.drawCollisionGraph()
+        self.drawSpecificGraph(XValue.DISTANCE, YValue.COLLISION_NUM, XValue.DUPLICATION, XValue.ALL)
+        self.drawSpecificGraph(XValue.DISTANCE, YValue.RETRANSMISSION_NUM, XValue.DUPLICATION, XValue.ALL)
