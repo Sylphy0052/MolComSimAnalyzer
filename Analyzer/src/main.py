@@ -11,17 +11,18 @@ DAT_PATH = '../dat/*.dat'
 
 def createDataDict(allFileList):
     dataDict = {}
-    # if os.path.isfile(PICKLE_FILE):
-    #     with open(PICKLE_FILE, 'rb') as f:
-    #         dataDict = pickle.load(f)
-    # else:
-    count = 1
-    for fileName in allFileList:
-        print("{} / {} - {} file reading...".format(count, len(allFileList), fileName.split("/")[2]))
-        dataDict[fileName] = AllData(fileName)
-        count += 1
-    with open(PICKLE_FILE, 'wb') as f:
-        pickle.dump(dataDict, f)
+    if os.path.isfile(PICKLE_FILE):
+        with open(PICKLE_FILE, 'rb') as f:
+            dataDict = pickle.load(f)
+    else:
+        print("Start to Read Dat File...")
+        count = 1
+        for fileName in allFileList:
+            print("{} / {} - {} file reading...".format(count, len(allFileList), fileName.split("/")[2]))
+            dataDict[fileName] = AllData(fileName)
+            count += 1
+        with open(PICKLE_FILE, 'wb') as f:
+            pickle.dump(dataDict, f)
 
 
     return dataDict
