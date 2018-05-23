@@ -1,8 +1,6 @@
 import numpy as np
 from enum import Enum
-import re
-import os
-import math
+import os, re, sys, math
 
 class AllData:
     def __init__(self, fileName):
@@ -22,12 +20,45 @@ class AllData:
     def getMean(self):
         return self.resultData.mean_
 
+    def getMedian(self):
+        return self.resultData.med_
+
+    def getJitter(self):
+        return self.resultData.std_
+
     def getTxDuplication(self):
         moleculeParams = self.datData.config["moleculeParams"]
         for mp in moleculeParams:
             if mp.typeOfMolecule is MoleculeType.INFO:
                 return mp.duplication
 
+    def getRetransmissionPlotData(self):
+        Y = self.retransmitData.retransmitNumData
+        X = np.arange(0, len(Y), 1, dtype=int)
+
+        return X, Y
+
+    def getCollisionPlotData(self):
+        y = self.collisionData.collisionNumData
+        yMax = np.max(y)
+        step = 1000
+        X = np.arange(0, yMax + step, step, dtype=int)
+        Y = []
+
+        for i in range(len(X) - 1):
+            start = X[i]
+            end = X[i + 1]
+            tmp = [j for j in y if j > start and j <= end]
+            Y.append(len(tmp))
+        Y.append(0)
+
+        return X, Y
+
+    def getCollisionNum(self):
+        return self.collisionData.collisionSum / len(self.collisionData.collisionStep)
+
+    def getRetransmissionNum(self):
+        return sum(self.retransmitData.retransmitNum) / len(self.retransmitData.retransmitStep)
 
 class DatData:
     def __init__(self, fileName):
@@ -102,6 +133,7 @@ class ResultData:
         self.max_ = np.max(self.steps)
         self.mean_ = np.mean(self.steps)
         self.std_ = np.std(self.steps)
+        self.med_ = np.median(self.steps)
 
     def parseFile(self):
         stepArray = []
@@ -118,6 +150,15 @@ class CollisionData:
         if not os.path.isfile(self.fileName):
             return
         self.parseFile()
+
+        self.collisionAllStep = []
+        for i in range(len(self.collisionStep)):
+            self.collisionAllStep.extend([int(j) for j in self.collisionStep[i] if int(j) != 0])
+
+        step = sorted(self.collisionAllStep)
+        self.collisionNumData = step
+
+        self.collisionSum = len(self.collisionAllStep)
 
     def parseFile(self):
         self.collisionStep = []
@@ -148,6 +189,16 @@ class RetransmitData:
             return
         self.parseFile()
 
+        self.maxRetransmitNum = np.max(self.retransmitNum)
+        self.minRetransmitNum = np.min(self.retransmitNum)
+
+        self.retransmitNum = sorted(self.retransmitNum)
+        self.retransmitNumData = []
+
+        for i in range(self.maxRetransmitNum + 1):
+            num = len([j for j in self.retransmitNum if i == j])
+            self.retransmitNumData.append(num)
+
     def parseFile(self):
         self.retransmitFailureCount = 0
         self.retransmitStep = []
@@ -171,10 +222,6 @@ class RetransmitData:
                 else:
                     self.retransmitTxStep.append([])
                     self.retransmitRxStep.append([])
-
-
-        # print(self.retransmitStep)
-
 
 class Position:
     def __init__(self, args):
